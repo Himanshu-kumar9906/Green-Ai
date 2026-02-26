@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus AI Behavior Dashboard</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-container" class="login-wrapper">
+        <div class="login-card glass-panel">
+            <div class="logo justify-center">
+                <i class="fa-solid fa-eye scan-icon" style="font-size: 2.5rem;"></i>
+                <h2 style="font-size: 2rem;">Vision AI</h2>
+            </div>
+            <p class="login-subtitle">Campus Behavior Management System</p>
+
+            <div class="login-tabs">
+                <button class="tab-btn active" id="tab-student" onclick="toggleLoginTab('student')">Student
+                    Portal</button>
+                <button class="tab-btn" id="tab-admin" onclick="toggleLoginTab('admin')">Admin Panel</button>
+            </div>
+
+            <!-- Student Login -->
+            <div id="login-student-form" class="login-form">
+                <div class="input-group">
+                    <label>Enter Roll Number (e.g. 101-108)</label>
+                    <input type="number" id="roll-input" placeholder="Roll No..." autocomplete="off">
+                </div>
+                <button class="btn btn-primary w-full mt-2" onclick="loginStudent()">Login to Student Portal</button>
+                <p class="login-hint">Hint: Valid roll numbers are 101 to 108</p>
+            </div>
+
+            <!-- Admin Login -->
+            <div id="login-admin-form" class="login-form" style="display: none;">
+                <div class="input-group">
+                    <label>Admin Access Code</label>
+                    <input type="password" id="admin-pass" placeholder="Enter any code..." autocomplete="off">
+                </div>
+                <button class="btn btn-primary w-full mt-2" onclick="loginAdmin()">Login as Administrator</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Container (Hidden initially) -->
+    <div class="app-container" id="app-wrapper" style="display: none;">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel" id="sidebar-menu">
+            <button class="sidebar-close-btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="logo">
+                <i class="fa-solid fa-eye scan-icon"></i>
+                <h2>Vision AI</h2>
+            </div>
+
+            <!-- Admin Nav -->
+            <nav id="nav-admin" style="display: none;">
+                <ul>
+                    <li class="nav-item active" onclick="switchTab('dashboard')"><i class="fa-solid fa-video"></i> Live
+                        Monitor</li>
+                    <li class="nav-item" onclick="switchTab('leaderboard')"><i class="fa-solid fa-trophy"></i>
+                        Leaderboard</li>
+                    <li class="nav-item" onclick="switchTab('heatmap')"><i class="fa-solid fa-map-location-dot"></i>
+                        Heatmap</li>
+                </ul>
+            </nav>
+
+            <!-- Student Nav -->
+            <nav id="nav-student" style="display: none;">
+                <ul>
+                    <li class="nav-item active" onclick="switchTab('student-dashboard')"><i
+                            class="fa-solid fa-user-graduate"></i> My Profile</li>
+                    <li class="nav-item" onclick="switchTab('leaderboard')"><i class="fa-solid fa-trophy"></i>
+                        Leaderboard</li>
+                </ul>
+            </nav>
+
+            <div class="user-profile mt-auto">
+                <div class="avatar" id="sidebar-avatar">A</div>
+                <div class="user-info">
+                    <span class="name" id="sidebar-name">Admin</span>
+                    <span class="role" id="sidebar-role">Campus Security</span>
+                </div>
+            </div>
+            <button class="btn btn-secondary w-full mt-2" onclick="logout()"
+                style="margin-top: 15px; font-size: 0.8rem;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </button>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-nav glass-panel">
+                <div class="page-title" style="display: flex; align-items: center; gap: 15px;">
+                    <button id="mobile-menu-btn" class="btn btn-secondary"
+                        style="display: none; padding: 6px 12px; font-size: 1.2rem;" onclick="toggleSidebar()">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 id="page-title-text">Live Monitor</h1>
+                </div>
+                <div class="nav-actions">
+                    <div class="status-indicator">
+                        <div class="dot pulsing-green"></div>
+                        <span>AI System Active</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Admin Live Dashboard View -->
+            <div id="dashboard-view" class="view-section active-view">
+                <div class="dashboard-grid">
+                    <!-- Real Webcam Feed -->
+                    <div class="cctv-card glass-panel flex-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-video"></i> Live Webcam Feed</h3>
+                            <select id="camera-select" class="dropdown">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="video-container" id="video-feed-container">
+                            <!-- Overlay for simulated bounding boxes -->
+                            <div class="video-overlay" id="video-overlay"></div>
+
+                            <!-- Real HTML5 Video Element -->
+                            <video id="webcam-feed" autoplay playsinline muted></video>
+
+                            <!-- Fallback Mock Background if webcam fails/denied -->
+                            <div class="mock-video background-scan" id="mock-feed" style="display: none;">
+                                <div class="grid-overlay"></div>
+                                <span class="camera-status">NO CAMERA SIGNAL</span>
+                            </div>
+
+                            <span class="camera-status" id="rec-status">REC 🔴</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Behavior Stream (Global) -->
+                    <div class="behavior-log-card glass-panel flex-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-list-check"></i> Campus Behavior Logs</h3>
+                        </div>
+                        <div class="log-stream" id="global-log-stream">
+                            <!-- Logs injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Dashboard View -->
+            <div id="student-dashboard-view" class="view-section" style="display: none;">
+                <div class="dashboard-grid" style="grid-template-columns: 1fr 2fr;">
+
+                    <!-- Student Score Summary -->
+                    <div class="glass-panel flex-card"
+                        style="height: 300px; justify-content: center; align-items: center; text-align: center;">
+                        <h3 style="color: var(--text-muted); margin-bottom: 20px;">Your Current Behavior Score</h3>
+                        <div class="score-circle">
+                            <span id="student-score-display">100</span>
+                        </div>
+                        <p id="student-status-text" class="mt-2" style="color: var(--success-color);">Excellent Citizen
+                        </p>
+                    </div>
+
+                    <!-- Personal Log Stream -->
+                    <div class="glass-panel flex-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-clock-rotate-left"></i> Your Recent History</h3>
+                        </div>
+                        <div class="log-stream" id="personal-log-stream">
+                            <!-- Personal logs only -->
+                            <div style="text-align: center; color: var(--text-muted); padding: 20px;">No specific logs
+                                yet... Keep the campus clean!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard View -->
+            <div id="leaderboard-view" class="view-section" style="display: none;">
+                <div class="glass-panel full-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-ranking-star"></i> Campus Leaderboard</h3>
+                        <div class="filters">
+                            <select id="dept-filter" class="dropdown" onchange="runFilter()">
+                                <option value="All">All Departments</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Arts">Arts</option>
+                                <option value="Science">Science</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Roll No</th>
+                                    <th>Student Name</th>
+                                    <th>Department</th>
+                                    <th>Total Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body">
+                                <!-- Rows injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heatmap View -->
+            <div id="heatmap-view" class="view-section" style="display: none;">
+                <div class="glass-panel full-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-fire"></i> Incident Heatmap</h3>
+                    </div>
+                    <div class="heatmap-grid" id="heatmap-grid">
+                        <!-- Heatmap cards injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Dispute Modal -->
+    <div id="dispute-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal glass-panel">
+            <h3>File a Dispute</h3>
+            <p id="dispute-details">You are disputing log #[ID].</p>
+            <div class="modal-video-review" id="modal-video-review">
+                <!-- Mini video replay mock -->
+                <i class="fa-solid fa-play"></i> Review Evidence Clip
+            </div>
+            <textarea placeholder="Provide details on why this log is incorrect..." rows="4"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDisputeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitDispute()">Submit to Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
